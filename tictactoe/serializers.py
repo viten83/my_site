@@ -1,60 +1,113 @@
 from rest_framework import serializers
 from .models import Game, GameMove
-import random
 
 
-class GameListSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    class Meta:
-        model = Game
-        fields = '__all__'
-
-
-class GameMoveCreateSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    game_move_owner = serializers.HiddenField(default=1)
-
+class GameMoveListModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = GameMove
         fields = '__all__'
+        read_only_fields = ['id', 'value']
+
+    def create(self, validated_data):
+        game_move = GameMove(**validated_data)
+        game_move.value = game_move.game.symbol_player
+        return game_move
+
+    def validate(self, attrs):
+        game = attrs['game']
+        column = attrs['column']
+        if column < 0 or column >= game.field_size:
+            raise serializers.ValidationError("Column out of range.")
+        row = attrs['row']
+        if row < 0 or row >= game.field_size:
+            raise serializers.ValidationError("Row out of range.")
+        return attrs
 
 
-class GameMoveDetailSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+class GameListModelSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    start_date_time = serializers.DateTimeField(read_only=True)
+    end_date_time = serializers.DateTimeField(read_only=True)
+    winner = serializers.IntegerField(read_only=True)
+    state = serializers.IntegerField(read_only=True)
+    field_size = serializers.IntegerField()
+    symbol_player = serializers.IntegerField()
+    symbol_computer = serializers.IntegerField(read_only=True)
+    level = serializers.IntegerField()
 
-    class Meta:
-        model = GameMove
-        fields = '__all__'
+    def create(self, validated_data):
+        game = Game(**validated_data)
+        game.update_symbol_computer()
+        return game
 
-
-class GameMoveListSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault)
-
-    class Meta:
-        model = GameMove
-        fields = '__all__'
-
-
-class GameCreateSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    result_game = serializers.HiddenField(default=4)
-    end_date_time = serializers.HiddenField(default=None)
+    def validate(self, attrs):
+        field_size = attrs['field_size']
+        if field_size < 3:
+            raise serializers.ValidationError("Field size out of range.")
+        level = attrs['level']
+        if level not in Game.Levels.to_dict().values():
+            raise serializers.ValidationError("Level out of range.")
+        symbol_player = attrs['symbol_player']
+        if symbol_player not in Game.Symbols.to_dict().values():
+            raise serializers.ValidationError("Symbol player out of range.")
+        return attrs
 
     class Meta:
         model = Game
-        fields = '__all__'
+        fields = [
+            'id',
+            'start_date_time',
+            'end_date_time',
+            'winner',
+            'state',
+            'field_size',
+            'symbol_player',
+            'symbol_computer',
+            'level'
+        ]
 
 
-class GameDetailSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+class GameMoveDetailModelSerializer(serializers.ModelSerializer):
+    game = GameListModelSerializer()
+
+    class Meta:
+        model = GameMove
+        fields = [
+            'id',
+            'row',
+            'column',
+            'value',
+            'date_time',
+            'game'
+        ]
+
+
+class GameDetailModelSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    start_date_time = serializers.DateTimeField(read_only=True)
+    end_date_time = serializers.DateTimeField(read_only=True)
+    winner = serializers.IntegerField(read_only=True)
+    state = serializers.IntegerField(read_only=True)
+    field_size = serializers.IntegerField()
+    symbol_player = serializers.IntegerField()
+    symbol_computer = serializers.IntegerField(read_only=True)
+    level = serializers.IntegerField()
+
+    game_moves = GameMoveListModelSerializer(many=True)
 
     class Meta:
         model = Game
-        fields = '__all__'
-
-
-
-
+        fields = [
+            'id',
+            'start_date_time',
+            'end_date_time',
+            'winner',
+            'state',
+            'field_size',
+            'symbol_player',
+            'symbol_computer',
+            'level',
+            "game_moves"
+        ]
 
 
