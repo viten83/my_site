@@ -39,7 +39,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-
     username = models.CharField(max_length=128, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
@@ -55,7 +54,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username+" - "+self.email
-
 
 
 

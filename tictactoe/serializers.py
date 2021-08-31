@@ -16,10 +16,10 @@ class GameMoveListModelSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         game = attrs['game']
         column = attrs['column']
-        if column < 0 or column >= game.field_size:
+        if column < 0 or column >= game.board_size:
             raise serializers.ValidationError("Column out of range.")
         row = attrs['row']
-        if row < 0 or row >= game.field_size:
+        if row < 0 or row >= game.board_size:
             raise serializers.ValidationError("Row out of range.")
         return attrs
 
@@ -30,9 +30,9 @@ class GameListModelSerializer(serializers.ModelSerializer):
     end_date_time = serializers.DateTimeField(read_only=True)
     winner = serializers.IntegerField(read_only=True)
     state = serializers.IntegerField(read_only=True)
-    field_size = serializers.IntegerField()
-    symbol_player = serializers.IntegerField()
-    symbol_computer = serializers.IntegerField(read_only=True)
+    board_size = serializers.IntegerField()
+    symbol_player = serializers.CharField(max_length=1)
+    symbol_computer = serializers.CharField(read_only=True, max_length=1)
     level = serializers.IntegerField()
 
     def create(self, validated_data):
@@ -41,14 +41,14 @@ class GameListModelSerializer(serializers.ModelSerializer):
         return game
 
     def validate(self, attrs):
-        field_size = attrs['field_size']
-        if field_size < 3:
+        board_size = attrs['board_size']
+        if board_size < 3:
             raise serializers.ValidationError("Field size out of range.")
         level = attrs['level']
         if level not in Game.Levels.to_dict().values():
             raise serializers.ValidationError("Level out of range.")
         symbol_player = attrs['symbol_player']
-        if symbol_player not in Game.Symbols.to_dict().values():
+        if symbol_player not in Game.Symbols.to_list():
             raise serializers.ValidationError("Symbol player out of range.")
         return attrs
 
@@ -60,7 +60,7 @@ class GameListModelSerializer(serializers.ModelSerializer):
             'end_date_time',
             'winner',
             'state',
-            'field_size',
+            'board_size',
             'symbol_player',
             'symbol_computer',
             'level'
@@ -88,9 +88,9 @@ class GameDetailModelSerializer(serializers.ModelSerializer):
     end_date_time = serializers.DateTimeField(read_only=True)
     winner = serializers.IntegerField(read_only=True)
     state = serializers.IntegerField(read_only=True)
-    field_size = serializers.IntegerField()
-    symbol_player = serializers.IntegerField()
-    symbol_computer = serializers.IntegerField(read_only=True)
+    board_size = serializers.IntegerField()
+    symbol_player = serializers.CharField(max_length=1)
+    symbol_computer = serializers.CharField(read_only=True, max_length=1)
     level = serializers.IntegerField()
 
     game_moves = GameMoveListModelSerializer(many=True)
@@ -103,7 +103,7 @@ class GameDetailModelSerializer(serializers.ModelSerializer):
             'end_date_time',
             'winner',
             'state',
-            'field_size',
+            'board_size',
             'symbol_player',
             'symbol_computer',
             'level',

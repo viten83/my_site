@@ -13,42 +13,43 @@ class Game(models.Model):
             return {"PROGRESS": 1, "GAME_OVER": 2}
 
     class Winners(models.IntegerChoices):
-        PLAYER = 1, 'Player'
-        COMPUTER = 2, 'Computer'
-        TIE = 3, 'Tie'
+        PLAYER = -1, 'Player'
+        COMPUTER = 1, 'Computer'
+        TIE = 0, 'Tie'
 
         @staticmethod
         def to_dict():
-            return {"PLAYER": 1, "COMPUTER": 2, "TIE": 3}
+            return {"PLAYER": -1, "COMPUTER": 1, "TIE": 0}
 
-    class Symbols(models.IntegerChoices):
-        VALUE_X = 1, 'X'
-        VALUE_O = -1, 'O'
+    class Symbols(models.TextChoices):
+        VALUE_X = 'X'
+        VALUE_O = 'O'
 
         @staticmethod
-        def to_dict():
-            return {"X": 1, "O": -1}
+        def to_list():
+            return ['X', 'O']
 
     class Levels(models.IntegerChoices):
         EASY = 1, 'Easy'
-        HARD = 2, 'Hard'
+        MEDIUM = 2, 'Medium'
+        HARD = 3, 'Hard'
 
         @staticmethod
         def to_dict():
-            return {"EASY": 1, "HARD": 2}
+            return {"EASY": 1, "MEDIUM": 2, "HARD": 3}
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Player")
     start_date_time = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name="Date of start game")
     end_date_time = models.DateTimeField(auto_now_add=False, auto_now=False, null=True, verbose_name="Date of end game")
-    field_size = models.IntegerField(default=3, verbose_name="Playing field size")
+    board_size = models.IntegerField(default=3, verbose_name="Playing field size")
     state = models.IntegerField(choices=States.choices, default=1, verbose_name="Game stats")
     winner = models.IntegerField(choices=Winners.choices, null=True, verbose_name="Winner game")
-    symbol_player = models.IntegerField(choices=Symbols.choices, verbose_name="Player symbol")
-    symbol_computer = models.IntegerField(choices=Symbols.choices, verbose_name="Computer symbol")
+    symbol_player = models.CharField(choices=Symbols.choices, max_length=1, verbose_name="Player symbol")
+    symbol_computer = models.CharField(choices=Symbols.choices, max_length=1, verbose_name="Computer symbol")
     level = models.IntegerField(choices=Levels.choices, verbose_name="Game level")
 
     def __str__(self):
-        return " -- field size:" + str(self.field_size) + " -- start date:" + str(self.start_date_time)
+        return " -- field size:" + str(self.board_size) + " -- start date:" + str(self.start_date_time)
 
     def update_symbol_computer(self):
         if self.symbol_player == Game.Symbols.VALUE_O:
